@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ARISE">
+<meta name="theme-color" content="#0ea5e9">
+<meta name="description" content="Solo Leveling Personal Development System">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<title>STATUS WINDOW — ARISE</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020408;--panel:#050d18;--border:#1a4a6b;--glow:#0ea5e9;
+  --accent:#38bdf8;--a2:#7dd3fc;--gold:#f59e0b;--red:#ef4444;
+  --green:#22c55e;--purple:#a855f7;--cyan:#22d3ee;--text:#e0f2fe;--dim:#64748b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);font-family:'Rajdhani',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden}
+#bg-c{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35}
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:20px 14px 100px}
+
+/* ── STATUS BAR ── */
+.status-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;padding:7px 14px;background:rgba(3,9,20,.95);border:1px solid var(--border);border-radius:4px;flex-wrap:wrap}
+.sb-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s ease-in-out infinite;flex-shrink:0}
+.online-dot.off{background:var(--red);box-shadow:0 0 8px var(--red);animation:none}
+.sb-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1.5px}
+.sb-txt span{color:var(--accent)}
+.sb-right{display:flex;align-items:center;gap:6px}
+.sb-btn{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;padding:4px 10px;border-radius:3px;border:1px solid;cursor:pointer;transition:all .2s;background:transparent}
+.sb-btn.save{border-color:rgba(34,197,94,.5);color:var(--green)}.sb-btn.save:hover{background:rgba(34,197,94,.1)}
+.sb-btn.reset{border-color:rgba(239,68,68,.4);color:var(--red)}.sb-btn.reset:hover{background:rgba(239,68,68,.1)}
+.sb-btn.export{border-color:rgba(245,158,11,.4);color:var(--gold)}.sb-btn.export:hover{background:rgba(245,158,11,.1)}
+.autosave-flash{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--green);letter-spacing:1.5px;opacity:0;transition:opacity .3s}
+.autosave-flash.show{opacity:1}
+
+/* ── HEADER ── */
+.header{text-align:center;margin-bottom:18px;animation:fadeDown .8s ease both}
+.h-label{font-family:'Share Tech Mono',monospace;color:var(--accent);font-size:10px;letter-spacing:6px;opacity:.7;margin-bottom:6px}
+.h-title{font-family:'Cinzel',serif;font-size:clamp(22px,6vw,50px);font-weight:900;letter-spacing:8px;color:var(--accent);text-shadow:0 0 30px #0ea5e960,0 0 70px #0ea5e920;line-height:1}
+.h-sub{font-family:'Share Tech Mono',monospace;color:var(--dim);font-size:10px;letter-spacing:3px;margin-top:6px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--glow),transparent);margin:10px auto;max-width:400px;opacity:.4}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;margin-bottom:14px;background:rgba(3,9,20,.95);border:1px solid var(--border);border-radius:4px;padding:4px;flex-wrap:wrap}
+.tab{flex:1;min-width:48px;padding:8px 3px;font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--dim);background:transparent;border:1px solid transparent;cursor:pointer;border-radius:3px;transition:all .2s;text-transform:uppercase;text-align:center}
+.tab.on{background:rgba(14,165,233,.12);color:var(--accent);border-color:rgba(14,165,233,.3);box-shadow:0 0 10px rgba(14,165,233,.12)}
+.tab:hover:not(.on){color:var(--a2);background:rgba(14,165,233,.05)}
+.pane{display:none}.pane.on{display:block}
+
+/* ── PANEL ── */
+.panel{background:linear-gradient(145deg,#050d18,#020810);border:1px solid var(--border);border-radius:4px;position:relative;overflow:hidden;margin-bottom:14px;animation:fadeUp .5s ease both}
+.panel::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(14,165,233,.025),transparent 60%);pointer-events:none}
+.pc{position:absolute;width:10px;height:10px;border-color:var(--glow);border-style:solid;opacity:.7}
+.pc.tl{top:-1px;left:-1px;border-width:2px 0 0 2px}.pc.tr{top:-1px;right:-1px;border-width:2px 2px 0 0}
+.pc.bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px}.pc.br{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.sec{padding:10px 20px;background:linear-gradient(90deg,rgba(14,165,233,.07),transparent);border-bottom:1px solid var(--border);font-family:'Cinzel',serif;font-size:11px;letter-spacing:4px;color:var(--accent);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sec-left{display:flex;align-items:center;gap:10px}
+.sec-left::before{content:'';width:3px;height:14px;background:var(--accent);border-radius:2px;flex-shrink:0;box-shadow:0 0 8px var(--accent)}
+.sec-btn{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;padding:3px 9px;border:1px solid rgba(14,165,233,.4);border-radius:2px;color:var(--accent);background:transparent;cursor:pointer;transition:all .2s}
+.sec-btn:hover{background:rgba(14,165,233,.1)}
+
+/* ── IDENTITY ── */
+.id-card{padding:18px 22px}
+.id-grid{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
+.avatar-wrap{position:relative;flex-shrink:0}
+.avatar{width:70px;height:70px;border-radius:50%;border:2px solid var(--glow);background:radial-gradient(circle at 35% 35%,#0f3050,#020810);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px var(--rank-glow,#0ea5e940),inset 0 0 14px #0ea5e918;font-size:28px;position:relative;transition:border-color .5s,box-shadow .5s;cursor:pointer}
+.avatar::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--rank-color,rgba(14,165,233,.25));animation:spin 9s linear infinite;opacity:.45}
+.avatar-picker{position:absolute;top:75px;left:50%;transform:translateX(-50%);background:#050d18;border:1px solid var(--border);border-radius:6px;padding:8px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,.6);display:none}
+.avatar-picker.show{display:grid}
+.av-opt{font-size:20px;cursor:pointer;padding:4px;border-radius:3px;text-align:center;transition:background .15s}.av-opt:hover{background:rgba(14,165,233,.15)}
+.p-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:3px;margin-bottom:3px}
+.p-name{font-family:'Cinzel',serif;font-size:clamp(16px,4vw,26px);font-weight:700;color:var(--a2);letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p-title{font-size:12px;color:var(--gold);letter-spacing:1px;margin-top:3px;font-weight:600}
+.p-joined{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1px;margin-top:3px}
+.rank-badge{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0}
+.rank-ltr{font-family:'Cinzel',serif;font-size:44px;font-weight:900;line-height:1;transition:color .5s,text-shadow .5s}
+.rank-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:3px}
+.rank-title-badge{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:2px;padding:2px 8px;border-radius:2px;border:1px solid;margin-top:2px;white-space:nowrap}
+[contenteditable]{cursor:text;outline:none}[contenteditable]:focus{border-bottom:1px solid var(--glow);color:#fff}
+
+/* ── BARS ── */
+.lvl-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:12px 22px;border-top:1px solid var(--border)}
+.xg label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;display:block;margin-bottom:5px}
+.bt{height:6px;background:#080f1e;border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px;position:relative;overflow:hidden;transition:width 1.2s cubic-bezier(.22,1,.36,1)}
+.bf::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shim 2.5s ease infinite}
+.bf.xp{background:linear-gradient(90deg,#0ea5e9,#38bdf8)}.bf.hp{background:linear-gradient(90deg,#16a34a,#22c55e)}.bf.rp{transition:width 1.2s cubic-bezier(.22,1,.36,1)}
+.bv{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--a2);text-align:right;margin-top:3px}
+.lvl-n{font-family:'Cinzel',serif;font-size:13px;color:var(--gold);font-weight:700}
+.max-badge{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:2px;margin-left:5px;animation:rPulse 1.5s ease-in-out infinite;display:none}
+.sp-row{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;border-top:1px solid var(--border)}
+.sp-l{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px}
+.sp-v{font-family:'Cinzel',serif;font-size:15px;color:var(--gold);font-weight:700}
+
+/* ── STATS LIST ── */
+.stat-list{padding:4px 0}
+.sl-item{display:grid;grid-template-columns:26px 105px 1fr 44px;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid rgba(26,74,107,.3);transition:background .2s}
+.sl-item:last-child{border-bottom:none}.sl-item:hover{background:#071525}
+.sl-icon{font-size:16px;text-align:center}
+.sl-name-wrap{}
+.sl-name{font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
+.sl-desc{font-size:10px;color:var(--dim);line-height:1.3;margin-top:2px;opacity:.7}
+.sl-bar-wrap{}
+.sl-bt{height:8px;background:#080f1e;border-radius:4px;overflow:hidden}
+.sl-bf{height:100%;border-radius:4px;transition:width 1.4s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden}
+.sl-bf::after{content:'';position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shim 2.5s ease infinite}
+.sl-slider{width:100%;height:8px;-webkit-appearance:none;appearance:none;background:transparent;cursor:pointer;margin-top:-12px;position:relative;z-index:2;opacity:0;transition:opacity .2s}
+.sl-item:hover .sl-slider{opacity:1}
+.sl-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);cursor:pointer;box-shadow:0 0 8px var(--accent)}
+.sl-val{font-family:'Cinzel',serif;font-size:22px;font-weight:700;text-align:right;transition:color .3s}
+.sl-item.str .sl-bf{background:linear-gradient(90deg,#b91c1c,#ef4444)}.sl-item.str .sl-val{color:#fca5a5}
+.sl-item.agi .sl-bf{background:linear-gradient(90deg,#0369a1,#38bdf8)}.sl-item.agi .sl-val{color:#7dd3fc}
+.sl-item.int .sl-bf{background:linear-gradient(90deg,#7c3aed,#a855f7)}.sl-item.int .sl-val{color:#c4b5fd}
+.sl-item.per .sl-bf{background:linear-gradient(90deg,#b45309,#f59e0b)}.sl-item.per .sl-val{color:#fcd34d}
+.sl-item.vit .sl-bf{background:linear-gradient(90deg,#047857,#22c55e)}.sl-item.vit .sl-val{color:#86efac}
+.sl-item.men .sl-bf{background:linear-gradient(90deg,#0e7490,#22d3ee)}.sl-item.men .sl-val{color:#a5f3fc}
+.avg-row{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--border);background:rgba(14,165,233,.03)}
+.avg-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px}
+.avg-val{font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:var(--accent)}
+
+/* ── RANK ── */
+.rank-chips{display:flex;gap:4px;padding:14px 16px;flex-wrap:wrap}
+.rank-chip{flex:1;min-width:60px;padding:10px 6px;text-align:center;border-radius:3px;border:1px solid;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.rank-chip::before{content:'';position:absolute;inset:0;background:var(--rc-bg,transparent);opacity:0;transition:opacity .3s}
+.rank-chip:hover::before{opacity:1}
+.rank-chip .rc-ltr{font-family:'Cinzel',serif;font-size:22px;font-weight:900;line-height:1}
+.rank-chip .rc-title{font-family:'Share Tech Mono',monospace;font-size:7px;letter-spacing:1.5px;margin-top:2px;opacity:.8}
+.rank-chip .rc-lvl{font-family:'Share Tech Mono',monospace;font-size:7px;margin-top:3px;opacity:.5}
+.rank-chip.locked{opacity:.3;filter:grayscale(.85)}.rank-chip.unlocked{opacity:.6}.rank-chip.current{opacity:1}
+.rank-chip.current::after{content:'▼ NOW';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-family:'Share Tech Mono',monospace;font-size:6px;letter-spacing:1px}
+
+/* RANK INFO CARDS */
+.rank-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+.ric{background:#030b14;border:1px solid var(--border);border-radius:4px;padding:14px 16px;position:relative;transition:border-color .3s;cursor:pointer}
+.ric:hover{border-color:rgba(14,165,233,.4)}
+.ric.current-ric{border-color:var(--rc-border) !important}
+.ric-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ric-ltr{font-family:'Cinzel',serif;font-size:28px;font-weight:900}
+.ric-info{}
+.ric-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700}
+.ric-req{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--dim);margin-top:2px;letter-spacing:1px}
+.ric-desc{font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:8px}
+.ric-perks{display:flex;flex-direction:column;gap:3px}
+.ric-perk{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;display:flex;align-items:center;gap:5px}
+.ric-perk::before{content:'▸'}
+.ric-status{position:absolute;top:8px;right:10px;font-family:'Share Tech Mono',monospace;font-size:8px;padding:2px 7px;border-radius:2px;border:1px solid}
+
+/* ── QUESTS ── */
+.quest-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border)}
+.qs-card{background:var(--panel);padding:12px 14px;text-align:center}
+.qs-num{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:var(--accent)}
+.qs-lbl{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--dim);letter-spacing:1.5px;margin-top:2px}
+.qi{display:flex;align-items:flex-start;gap:10px;padding:11px 18px;border-bottom:1px solid rgba(26,74,107,.3);transition:background .2s}
+.qi:last-child{border-bottom:none}.qi:hover{background:rgba(14,165,233,.03)}
+.qc{width:18px;height:18px;border:1.5px solid var(--glow);border-radius:3px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;transition:all .2s}
+.qi.done .qc{background:rgba(34,197,94,.2);border-color:var(--green);color:var(--green)}
+.qi.done .qt{text-decoration:line-through;opacity:.35}
+.qcnt{flex:1;min-width:0;cursor:pointer}
+.qt{font-size:13px;font-weight:600;color:var(--text);letter-spacing:.5px;line-height:1.3}
+.q-tags{display:flex;align-items:center;gap:5px;margin-top:3px;flex-wrap:wrap}
+.q-cat{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:1px}
+.q-diff{font-family:'Share Tech Mono',monospace;font-size:8px;padding:1px 6px;border-radius:2px;border:1px solid}
+.q-diff.easy{border-color:#22c55e55;color:#86efac}.q-diff.normal{border-color:#38bdf855;color:#7dd3fc}
+.q-diff.hard{border-color:#f59e0b55;color:#fcd34d}.q-diff.extreme{border-color:#ef444455;color:#fca5a5}
+.qxp{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent);white-space:nowrap;flex-shrink:0;align-self:center}
+.qdel{font-size:12px;color:transparent;cursor:pointer;flex-shrink:0;align-self:center;padding:2px 5px;transition:color .2s}
+.qi:hover .qdel{color:var(--dim)}.qdel:hover{color:var(--red)!important}
+
+/* ── FORMS ── */
+.add-row{padding:10px 16px;display:flex;gap:6px;align-items:center;border-top:1px solid var(--border);flex-wrap:wrap}
+.inp{flex:1;min-width:90px;background:rgba(14,165,233,.04);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;padding:7px 10px;outline:none;transition:border-color .2s}
+.inp::placeholder{color:var(--dim);font-weight:400}.inp:focus{border-color:var(--glow)}
+.sel{background:#030d1a;border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:9px;padding:7px 7px;outline:none;cursor:pointer}
+.sel:focus{border-color:var(--glow)}
+.btn{background:rgba(14,165,233,.07);border:1px solid rgba(14,165,233,.45);color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:7px 12px;border-radius:3px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn:hover{background:rgba(14,165,233,.17);box-shadow:0 0 12px rgba(14,165,233,.2)}
+.btn.gold{border-color:rgba(245,158,11,.45);color:var(--gold);background:rgba(245,158,11,.05)}.btn.gold:hover{background:rgba(245,158,11,.15)}
+.btn.green{border-color:rgba(34,197,94,.45);color:var(--green);background:rgba(34,197,94,.05)}.btn.green:hover{background:rgba(34,197,94,.15)}
+.empty-st{padding:24px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:3px}
+
+/* ── FINANCE ── */
+.fin-hero{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border)}
+.fc{background:var(--panel);padding:14px 18px}
+.fc-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:5px}
+.fc-val{font-family:'Cinzel',serif;font-size:clamp(14px,3vw,22px);font-weight:700;color:var(--green);word-break:break-all}
+.fc-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);margin-top:3px}
+.rek-item{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid rgba(26,74,107,.28);transition:background .2s}
+.rek-item:hover{background:rgba(14,165,233,.03)}
+.rek-icon{width:32px;height:32px;border-radius:50%;background:rgba(14,165,233,.08);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.rek-info{flex:1;min-width:0}.rek-name{font-size:13px;font-weight:700;color:var(--text)}.rek-bank{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);margin-top:1px}
+.rek-bal{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--green);white-space:nowrap;flex-shrink:0}
+.rek-del{font-size:11px;color:transparent;cursor:pointer;padding:4px;transition:color .2s}.rek-item:hover .rek-del{color:var(--dim)}.rek-del:hover{color:var(--red)!important}
+.trx-item{display:flex;align-items:center;gap:9px;padding:8px 18px;border-bottom:1px solid rgba(26,74,107,.2)}
+.trx-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.trx-dot.in{background:var(--green);box-shadow:0 0 5px var(--green)}.trx-dot.out{background:var(--red);box-shadow:0 0 5px var(--red)}
+.trx-info{flex:1}.trx-name{font-size:12px;font-weight:600;color:var(--text)}.trx-date{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);margin-top:1px}
+.trx-amt{font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;white-space:nowrap}
+.trx-amt.in{color:var(--green)}.trx-amt.out{color:var(--red)}
+
+/* ── LANGUAGE ── */
+.lang-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+.lang-card{background:#030b14;border:1px solid var(--border);border-radius:4px;padding:13px 14px;transition:border-color .2s;position:relative}
+.lang-card:hover{border-color:rgba(14,165,233,.4)}
+.lc-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.lc-flag{font-size:24px;flex-shrink:0}.lc-info{flex:1;min-width:0}
+.lc-name{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--a2)}.lc-pct{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);margin-top:1px}
+.lc-lvl{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1.5px;padding:2px 7px;border-radius:2px;border:1px solid;flex-shrink:0}
+.lc-lvl.beg{border-color:#64748b;color:#94a3b8}.lc-lvl.ele{border-color:#22c55e;color:#86efac}
+.lc-lvl.int{border-color:#38bdf8;color:#7dd3fc}.lc-lvl.adv{border-color:#a855f7;color:#c4b5fd}
+.lc-lvl.flu{border-color:#f59e0b;color:#fcd34d}.lc-lvl.nat{border-color:#ef4444;color:#fca5a5}
+.lang-bt{height:5px;background:#0a1a2e;border-radius:3px;overflow:hidden;margin-bottom:7px}
+.lang-bf{height:100%;border-radius:3px;transition:width 1.3s cubic-bezier(.22,1,.36,1)}
+.lang-tags{display:flex;flex-wrap:wrap;gap:4px}
+.lang-tag{font-family:'Share Tech Mono',monospace;font-size:8px;padding:2px 6px;border:1px solid rgba(14,165,233,.22);border-radius:2px;color:var(--dim)}
+.lc-del{position:absolute;top:8px;right:8px;font-size:11px;color:transparent;cursor:pointer;transition:color .2s}.lang-card:hover .lc-del{color:var(--dim)}.lc-del:hover{color:var(--red)!important}
+
+/* ── INVENTORY ── */
+.inv-filters{display:flex;gap:4px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.fbtn{font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:1px;padding:4px 10px;border:1px solid var(--border);border-radius:2px;color:var(--dim);background:transparent;cursor:pointer;transition:all .2s}
+.fbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(14,165,233,.07)}
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;padding:12px}
+.inv-item{background:#030b14;border:1px solid var(--border);border-radius:4px;padding:12px 10px;text-align:center;position:relative;transition:all .2s}
+.inv-item:hover{border-color:rgba(14,165,233,.45);transform:translateY(-2px)}
+.inv-item.uncommon{border-color:rgba(34,197,94,.35)}.inv-item.rare{border-color:rgba(56,189,248,.5);box-shadow:0 0 8px rgba(56,189,248,.12)}
+.inv-item.epic{border-color:rgba(168,85,247,.5);box-shadow:0 0 10px rgba(168,85,247,.18)}
+.inv-item.legendary{border-color:rgba(245,158,11,.6);box-shadow:0 0 16px rgba(245,158,11,.28);animation:legG 2s ease-in-out infinite}
+.ii-icon{font-size:24px;margin-bottom:5px;display:block}.ii-name{font-size:11px;font-weight:700;color:var(--text);word-break:break-word;line-height:1.3}
+.ii-cat{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--dim);margin-top:3px}
+.ii-rar{font-family:'Share Tech Mono',monospace;font-size:8px;font-weight:700;margin-top:2px}
+.ii-rar.common{color:#94a3b8}.ii-rar.uncommon{color:var(--green)}.ii-rar.rare{color:var(--accent)}.ii-rar.epic{color:var(--purple)}.ii-rar.legendary{color:var(--gold)}
+.ii-qty{font-family:'Cinzel',serif;font-size:12px;color:var(--gold);font-weight:700;margin-top:2px}
+.ii-del{position:absolute;top:5px;right:5px;font-size:10px;color:transparent;cursor:pointer;transition:color .2s}.inv-item:hover .ii-del{color:var(--dim)}.ii-del:hover{color:var(--red)!important}
+
+/* ── ASSETS ── */
+.asset-hero{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border)}
+.ahc{background:var(--panel);padding:14px 16px}
+.ahc-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:5px}
+.ahc-val{font-family:'Cinzel',serif;font-size:clamp(13px,2.5vw,20px);font-weight:700;color:var(--gold);word-break:break-all}
+.ahc-val.g{color:var(--green)}.ahc-val.r{color:var(--red)}
+.asset-item{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid rgba(26,74,107,.28);transition:background .2s}
+.asset-item:hover{background:rgba(14,165,233,.03)}
+.ai-icon{width:34px;height:34px;border-radius:6px;background:rgba(14,165,233,.07);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.ai-info{flex:1;min-width:0}.ai-name{font-size:13px;font-weight:700;color:var(--text)}.ai-cat{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);margin-top:1px}
+.ai-right{text-align:right;flex-shrink:0}.ai-val{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--gold)}.ai-chg{font-family:'Share Tech Mono',monospace;font-size:9px;margin-top:1px}
+.ai-chg.up{color:var(--green)}.ai-chg.dn{color:var(--red)}
+.ai-del{font-size:12px;color:transparent;cursor:pointer;padding:4px;transition:color .2s;flex-shrink:0}.asset-item:hover .ai-del{color:var(--dim)}.ai-del:hover{color:var(--red)!important}
+.chart-wrap{padding:14px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.donut-w{position:relative;width:88px;height:88px;flex-shrink:0}
+#donutSvg{transform:rotate(-90deg)}
+.donut-c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.donut-n{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:var(--gold)}
+.donut-l{font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--dim);letter-spacing:1px;margin-top:1px}
+.legend{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
+.leg-i{display:flex;align-items:center;gap:7px}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.leg-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);flex:1}
+.leg-pct{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--a2)}
+
+/* ── MODALS ── */
+.overlay{position:fixed;inset:0;background:rgba(2,4,8,.88);z-index:400;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;padding:20px}
+.overlay.show{opacity:1;pointer-events:all}
+.modal{background:#050d18;border:1px solid var(--border);border-radius:6px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;position:relative;animation:modalIn .4s cubic-bezier(.22,1,.36,1)}
+.modal-close{position:absolute;top:12px;right:14px;font-size:16px;color:var(--dim);cursor:pointer;transition:color .2s;z-index:1}.modal-close:hover{color:var(--red)}
+.modal-title{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:3px;padding:18px 20px;border-bottom:1px solid var(--border)}
+.modal-body{padding:16px 20px}
+
+/* LEVEL UP */
+.lvlup-overlay{position:fixed;inset:0;background:rgba(2,4,8,.9);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.lvlup-overlay.show{opacity:1;pointer-events:all}
+.lvlup-box{text-align:center;animation:lvlScale .6s cubic-bezier(.22,1,.36,1)}
+.lvlup-title{font-family:'Cinzel',serif;font-size:clamp(26px,5vw,52px);font-weight:900;color:var(--gold);text-shadow:0 0 40px #f59e0baa;letter-spacing:6px}
+.lvlup-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:4px;margin-top:8px}
+.lvlup-num{font-family:'Cinzel',serif;font-size:clamp(60px,12vw,96px);font-weight:900;color:var(--accent);text-shadow:0 0 60px #0ea5e9aa;line-height:1;animation:numPop .5s .2s cubic-bezier(.22,1,.36,1) both}
+.lvlup-rank{font-family:'Cinzel',serif;font-size:22px;font-weight:700;margin-top:8px;animation:fadeUp .5s .35s ease both}
+.lvlup-close{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:3px;margin-top:20px;cursor:pointer;border:1px solid var(--border);padding:6px 20px;border-radius:3px;transition:all .2s;display:inline-block}.lvlup-close:hover{border-color:var(--glow);color:var(--accent)}
+
+/* RESET MODAL */
+.reset-warn{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--red);letter-spacing:1.5px;text-align:center;padding:14px;border:1px solid rgba(239,68,68,.3);border-radius:4px;margin-bottom:14px;line-height:1.7}
+.reset-confirm-input{width:100%;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.4);border-radius:3px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;padding:9px 12px;outline:none;margin-bottom:10px;text-align:center;letter-spacing:2px}
+.reset-confirm-input::placeholder{color:rgba(239,68,68,.4)}
+.reset-confirm-input:focus{border-color:var(--red)}
+
+/* NOTIFY */
+.notify{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(4,10,22,.97);border:1px solid var(--glow);border-radius:4px;padding:9px 22px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;box-shadow:0 0 30px rgba(14,165,233,.25);z-index:600;transition:transform .4s cubic-bezier(.22,1,.36,1),opacity .4s;opacity:0;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+.notify.show{transform:translateX(-50%) translateY(0);opacity:1}
+.notify.gold{border-color:var(--gold);color:var(--gold);box-shadow:0 0 30px rgba(245,158,11,.25)}
+.notify.green{border-color:var(--green);color:var(--green);box-shadow:0 0 30px rgba(34,197,94,.2)}
+.notify.red{border-color:var(--red);color:var(--red);box-shadow:0 0 30px rgba(239,68,68,.2)}
+
+/* ONLINE USERS */
+.online-users{display:flex;align-items:center;gap:5px}
+.ou-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.ou-list{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--dim);letter-spacing:1px}
+
+/* ACHIEVEMENTS */
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;padding:14px}
+.ach-item{background:#030b14;border:1px solid var(--border);border-radius:4px;padding:12px 10px;text-align:center;position:relative;transition:all .2s}
+.ach-item.unlocked{border-color:rgba(245,158,11,.4)}
+.ach-item.locked{opacity:.35;filter:grayscale(.8)}
+.ach-icon{font-size:26px;margin-bottom:6px;display:block}
+.ach-name{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--a2);letter-spacing:1px;line-height:1.4}
+.ach-desc{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.4}
+.ach-badge{position:absolute;top:6px;right:6px;font-size:10px}
+
+@keyframes fadeDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes rPulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes shim{to{left:150%}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes legG{0%,100%{box-shadow:0 0 14px rgba(245,158,11,.28)}50%{box-shadow:0 0 24px rgba(245,158,11,.55)}}
+@keyframes lvlScale{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes numPop{from{opacity:0;transform:scale(1.4)}to{opacity:1;transform:scale(1)}}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes savedPop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+@media(max-width:600px){
+  .fin-hero,.lang-grid,.asset-hero,.rank-info-grid{grid-template-columns:1fr}
+  .id-grid{grid-template-columns:auto 1fr}.rank-badge{display:none}
+  .lvl-row{grid-template-columns:1fr 1fr}.quest-stats{grid-template-columns:repeat(2,1fr)}
+  .sl-item{grid-template-columns:22px 85px 1fr 38px;gap:7px;padding:9px 14px}
+  .inv-grid{grid-template-columns:repeat(auto-fill,minmax(95px,1fr))}
+}
+</style>
+</head>
+<body>
+<canvas id="bg-c"></canvas>
+
+<!-- LEVEL UP OVERLAY -->
+<div class="lvlup-overlay" id="lvlOverlay" onclick="closeLvlUp()">
+  <div class="lvlup-box">
+    <div class="lvlup-title">LEVEL UP</div>
+    <div class="lvlup-num" id="loNum">2</div>
+    <div class="lvlup-sub" id="loSub">+3 STAT POINTS GAINED</div>
+    <div class="lvlup-rank" id="loRank"></div>
+    <div class="lvlup-close">[ TAP TO CONTINUE ]</div>
+  </div>
+</div>
+
+<!-- RESET MODAL -->
+<div class="overlay" id="resetModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-close" onclick="closeModal('resetModal')">✕</div>
+    <div class="modal-title">⚠ RESET HUNTER DATA</div>
+    <div class="modal-body">
+      <div class="reset-warn">ALL PROGRESS WILL BE PERMANENTLY DELETED.<br>THIS ACTION CANNOT BE UNDONE.<br><br>YOUR LEVEL, STATS, QUESTS, FINANCE,<br>INVENTORY & ASSETS WILL BE WIPED.</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);text-align:center;margin-bottom:8px;letter-spacing:2px">TYPE "RESET" TO CONFIRM</div>
+      <input class="reset-confirm-input" id="resetConfirmInp" placeholder="RESET" maxlength="5">
+      <button class="btn" style="width:100%;border-color:rgba(239,68,68,.5);color:var(--red);background:rgba(239,68,68,.05)" onclick="doReset()">CONFIRM RESET — ERASE ALL DATA</button>
+    </div>
+  </div>
+</div>
+
+<!-- RANK INFO MODAL -->
+<div class="overlay" id="rankModal">
+  <div class="modal">
+    <div class="modal-close" onclick="closeModal('rankModal')">✕</div>
+    <div class="modal-title">🏆 RANK REQUIREMENTS & PERKS</div>
+    <div class="modal-body" id="rankModalBody"></div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="overlay" id="exportModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-close" onclick="closeModal('exportModal')">✕</div>
+    <div class="modal-title">💾 EXPORT / IMPORT DATA</div>
+    <div class="modal-body">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:8px">EXPORT — copy your data to backup</div>
+      <textarea id="exportArea" style="width:100%;height:90px;background:#030b14;border:1px solid var(--border);border-radius:3px;color:var(--a2);font-family:'Share Tech Mono',monospace;font-size:9px;padding:8px;outline:none;resize:none;letter-spacing:.5px"></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px;margin-bottom:16px">
+        <button class="btn" style="flex:1" onclick="doCopy()">COPY TO CLIPBOARD</button>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:8px">IMPORT — paste backup data here</div>
+      <textarea id="importArea" style="width:100%;height:90px;background:#030b14;border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:9px;padding:8px;outline:none;resize:none" placeholder="Paste exported data here..."></textarea>
+      <button class="btn gold" style="width:100%;margin-top:8px" onclick="doImport()">IMPORT & RESTORE DATA</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="sb-left">
+    <div class="online-dot" id="onlineDot"></div>
+    <div class="sb-txt">SYNC: <span id="syncStatus">CONNECTING...</span></div>
+    <div class="sb-txt">LAST SAVE: <span id="lastSaveTxt">—</span></div>
+    <div class="autosave-flash" id="autosaveFlash">✓ AUTOSAVED</div>
+  </div>
+  <div class="sb-right">
+    <button class="sb-btn export" onclick="openExport()">⬆ EXPORT</button>
+    <button class="sb-btn save" onclick="manualSave()">💾 SAVE</button>
+    <button class="sb-btn reset" onclick="openModal('resetModal')">↺ RESET</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="h-label">▶ SYSTEM NOTIFICATION</div>
+  <div class="h-title">STATUS WINDOW</div>
+  <div class="h-sub">[ ARISE · PERSONAL DEVELOPMENT SYSTEM ]</div>
+  <div class="divider"></div>
+</div>
+
+<!-- IDENTITY CARD -->
+<div class="panel" style="animation-delay:.04s">
+  <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+  <div class="id-card">
+    <div class="id-grid">
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatarEl" onclick="toggleAvatarPicker()" title="Click to change avatar">⚔️</div>
+        <div class="avatar-picker" id="avatarPicker">
+          <div class="av-opt" onclick="setAvatar('⚔️')">⚔️</div><div class="av-opt" onclick="setAvatar('🗡️')">🗡️</div>
+          <div class="av-opt" onclick="setAvatar('🛡️')">🛡️</div><div class="av-opt" onclick="setAvatar('🏹')">🏹</div>
+          <div class="av-opt" onclick="setAvatar('🔮')">🔮</div><div class="av-opt" onclick="setAvatar('⚡')">⚡</div>
+          <div class="av-opt" onclick="setAvatar('🌙')">🌙</div><div class="av-opt" onclick="setAvatar('☀️')">☀️</div>
+          <div class="av-opt" onclick="setAvatar('🐉')">🐉</div><div class="av-opt" onclick="setAvatar('👁️')">👁️</div>
+          <div class="av-opt" onclick="setAvatar('💀')">💀</div><div class="av-opt" onclick="setAvatar('🦋')">🦋</div>
+          <div class="av-opt" onclick="setAvatar('🌸')">🌸</div><div class="av-opt" onclick="setAvatar('🔥')">🔥</div>
+          <div class="av-opt" onclick="setAvatar('❄️')">❄️</div>
+        </div>
+      </div>
+      <div>
+        <div class="p-lbl">▸ PLAYER</div>
+        <div class="p-name" contenteditable="true" spellcheck="false" id="pName">YOUR NAME</div>
+        <div class="p-title" contenteditable="true" spellcheck="false" id="pTitle">The One Who Arises</div>
+        <div class="p-joined" id="pJoined">HUNTER SINCE —</div>
+      </div>
+      <div class="rank-badge">
+        <div class="rank-ltr" id="rankLtr">E</div>
+        <div class="rank-sub">RANK</div>
+        <div class="rank-title-badge" id="rankTitleBadge">IRON</div>
+      </div>
+    </div>
+  </div>
+  <div class="lvl-row">
+    <div class="xg">
+      <label>⚡ LEVEL / EXP</label>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span class="lvl-n">LVL <span id="lvlN">1</span> / <span style="color:var(--dim);font-size:11px">50</span></span>
+        <span class="max-badge" id="maxBadge">MAX</span>
+      </div>
+      <div class="bt"><div class="bf xp" id="xpBar" style="width:0%"></div></div>
+      <div class="bv" id="xpVal">0 / 100 XP</div>
+    </div>
+    <div class="xg">
+      <label>❤️ VITALITY</label>
+      <div style="height:19px"></div>
+      <div class="bt"><div class="bf hp" id="hpBar" style="width:0%"></div></div>
+      <div class="bv" id="hpVal">— / 100</div>
+    </div>
+    <div class="xg">
+      <label>🏆 RANK PROGRESS</label>
+      <div style="height:19px"></div>
+      <div class="bt"><div class="bf rp" id="rankProgBar" style="width:0%"></div></div>
+      <div class="bv" id="rankProgVal">— to next rank</div>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab on" onclick="swTab('stats',this)">⚡ STATS</button>
+  <button class="tab" onclick="swTab('rank',this)">🏆 RANK</button>
+  <button class="tab" onclick="swTab('quests',this)">⚔️ QUESTS</button>
+  <button class="tab" onclick="swTab('ach',this)">🌟 ACHIEVE</button>
+  <button class="tab" onclick="swTab('finance',this)">💰 FINANCE</button>
+  <button class="tab" onclick="swTab('lang',this)">🌐 LANGUAGE</button>
+  <button class="tab" onclick="swTab('inv',this)">🎒 INVENTORY</button>
+  <button class="tab" onclick="swTab('assets',this)">🏦 ASSETS</button>
+</div>
+
+<!-- STATS -->
+<div class="pane on" id="pane-stats">
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+    <div class="sec"><div class="sec-left">ABILITY STATS</div><span style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--dim)">HOVER STAT TO ADJUST SLIDER</span></div>
+    <div class="sp-row">
+      <span class="sp-l">✦ STAT POINTS — earn by leveling up quests</span>
+      <span class="sp-v" id="spVal">0 SP</span>
+    </div>
+    <div class="stat-list" id="statList"></div>
+    <div class="avg-row">
+      <span class="avg-lbl">⬡ AVERAGE STAT POWER</span>
+      <span class="avg-val" id="avgStat">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- RANK -->
+<div class="pane" id="pane-rank">
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+    <div class="sec"><div class="sec-left">RANK SYSTEM</div><button class="sec-btn" onclick="openRankModal()">ℹ INFO & REQUIREMENTS</button></div>
+    <div class="rank-chips" id="rankChips"></div>
+    <div class="rank-info-grid" id="rankInfoGrid"></div>
+  </div>
+</div>
+
+<!-- QUESTS -->
+<div class="pane" id="pane-quests">
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+    <div class="quest-stats">
+      <div class="qs-card"><div class="qs-num" id="qTotal">0</div><div class="qs-lbl">TOTAL</div></div>
+      <div class="qs-card"><div class="qs-num" id="qDone" style="color:var(--green)">0</div><div class="qs-lbl">DONE</div></div>
+      <div class="qs-card"><div class="qs-num" id="qStreak" style="color:var(--gold)">0</div><div class="qs-lbl">STREAK 🔥</div></div>
+      <div class="qs-card"><div class="qs-num" id="qXpEarned" style="color:var(--accent)">0</div><div class="qs-lbl">TOTAL XP</div></div>
+    </div>
+    <div class="sec" style="border-top:1px solid var(--border)"><div class="sec-left">ACTIVE QUESTS</div><button class="sec-btn" onclick="clearDoneQuests()">CLEAR DONE</button></div>
+    <div id="questList"></div>
+    <div class="add-row">
+      <input class="inp" id="qInp" placeholder="Quest name..." maxlength="60">
+      <input class="inp" id="qCat" placeholder="Category" maxlength="20" style="flex:.5">
+      <select class="sel" id="qDiff">
+        <option value="easy">EASY +10</option>
+        <option value="normal" selected>NORMAL +20</option>
+        <option value="hard">HARD +35</option>
+        <option value="extreme">EXTREME +60</option>
+      </select>
+      <button class="btn" onclick="addQ()">+ QUEST</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACHIEVEMENTS -->
+<div class="pane" id="pane-ach">
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+    <div class="sec"><div class="sec-left">ACHIEVEMENTS</div><span id="achProgress" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim)">0 / 0</span></div>
+    <div class="ach-grid" id="achGrid"></div>
+  </div>
+</div>
+
+<!-- FINANCE -->
+<div class="pane" id="pane-finance">
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+    <div class="fin-hero">
+      <div class="fc"><div class="fc-lbl">💳 TOTAL BALANCE</div><div class="fc-val" id="totSaldo">Rp 0</div><div class="fc-sub" id="rekCnt">0 accounts</div></div>
+      <div class="fc"><div class="fc-lbl">📊 NET CASHFLOW</div><div class="fc-val" id="cashflow" style="color:var(--a2)">Rp 0</div><div class="fc-sub" id="trxCnt">0 transactions</div></div>
+      <div class="fc"><div class="fc-lbl">📅 THIS MONTH</div><div class="fc-val" id="monthFlow" style="color:var(--a2)">Rp 0</div><div class="fc-sub" id="monthLbl">—</div></div>
+    </div>
+    <div class="sec" style="margin-top:0"><div class="sec-left">BANK ACCOUNTS</div></div>
+    <div id="rekList"></div>
+    <div class="add-row">
+      <input class="inp" id="rName" placeholder="Account name" maxlength="30">
+      <input class="inp" id="rBank" placeholder="Bank name" maxlength="20" style="flex:.7">
+      <input class="inp" id="rBal" placeholder="Balance (Rp)" type="number" min="0" style="flex:.7">
+      <button class="btn gold" onclick="addRek()">+ ACCOUNT</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+    <div class="sec"><div class="sec-left">TRANSACTIONS</div></div>
+    <div id="trxList"></div>
+    <div class="add-row">
+      <input class="inp" id="tName" placeholder="Description..." maxlength="40">
+      <input class="inp" id="tAmt" placeholder="Amount (Rp)" type="number" min="0" style="flex:.6">
+      <select class="sel" id="tType"><option value="in">⬆ INCOME</option><option value="out">⬇ EXPENSE</option></select>
+      <select class="sel" id="tRek"><option value="">-- Account --</option></select>
+      <button class="btn" onclick="addTrx()">+ RECORD</button>
+    </div>
+  </div>
+</div>
+
+<!-- LANGUAGE -->
+<div class="pane" id="pane-lang">
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+    <div class="sec"><div class="sec-left">LANGUAGE SKILLS</div></div>
+    <div class="lang-grid" id="langGrid"></div>
+    <div class="add-row" style="flex-wrap:wrap">
+      <input class="inp" id="lName" placeholder="Language name" maxlength="20">
+      <input class="inp" id="lFlag" placeholder="🇬🇧" maxlength="4" style="flex:.28">
+      <select class="sel" id="lLvl">
+        <option value="beg">BEGINNER</option><option value="ele">ELEMENTARY</option>
+        <option value="int">INTERMEDIATE</option><option value="adv">ADVANCED</option>
+        <option value="flu">FLUENT</option><option value="nat">NATIVE</option>
+      </select>
+      <input class="inp" id="lPct" placeholder="% (1–100)" type="number" min="1" max="100" style="flex:.38">
+      <input class="inp" id="lSkills" placeholder="Skills: Reading, Writing, Speaking..." maxlength="80" style="flex:2">
+      <button class="btn" onclick="addLang()">+ LANGUAGE</button>
+    </div>
+  </div>
+</div>
+
+<!-- INVENTORY -->
+<div class="pane" id="pane-inv">
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+    <div class="sec"><div class="sec-left">INVENTORY</div><span id="invCount" style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--dim)">0 items</span></div>
+    <div class="inv-filters">
+      <button class="fbtn on" onclick="fInv('all',this)">ALL</button>
+      <button class="fbtn" onclick="fInv('equipment',this)">⚔ EQUIPMENT</button>
+      <button class="fbtn" onclick="fInv('skill',this)">📚 SKILL</button>
+      <button class="fbtn" onclick="fInv('consumable',this)">💊 CONSUMABLE</button>
+      <button class="fbtn" onclick="fInv('misc',this)">📦 MISC</button>
+    </div>
+    <div class="inv-grid" id="invGrid"></div>
+    <div class="add-row" style="flex-wrap:wrap">
+      <input class="inp" id="iName" placeholder="Item name" maxlength="30">
+      <input class="inp" id="iIcon" placeholder="🗡️" maxlength="4" style="flex:.28">
+      <select class="sel" id="iCat">
+        <option value="equipment">⚔ Equipment</option><option value="skill">📚 Skill Book</option>
+        <option value="consumable">💊 Consumable</option><option value="misc">📦 Misc</option>
+      </select>
+      <select class="sel" id="iRar">
+        <option value="common">Common</option><option value="uncommon">Uncommon</option>
+        <option value="rare">Rare</option><option value="epic">Epic</option><option value="legendary">Legendary</option>
+      </select>
+      <input class="inp" id="iQty" placeholder="Qty" type="number" min="1" value="1" style="flex:.28">
+      <button class="btn" onclick="addInv()">+ ITEM</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASSETS -->
+<div class="pane" id="pane-assets">
+  <div class="panel">
+    <div class="pc tl"></div><div class="pc tr"></div><div class="pc bl"></div><div class="pc br"></div>
+    <div class="asset-hero">
+      <div class="ahc"><div class="ahc-lbl">🏦 TOTAL ASSETS</div><div class="ahc-val" id="totAset">Rp 0</div></div>
+      <div class="ahc"><div class="ahc-lbl">📈 UNREALIZED GAIN</div><div class="ahc-val g" id="totGain">+Rp 0</div></div>
+      <div class="ahc"><div class="ahc-lbl">📋 ASSET COUNT</div><div class="ahc-val" id="cntAset" style="color:var(--a2)">0</div></div>
+    </div>
+    <div class="sec"><div class="sec-left">ASSET LIST</div></div>
+    <div id="assetList"></div>
+    <div class="chart-wrap">
+      <div class="donut-w">
+        <svg id="donutSvg" width="88" height="88" viewBox="0 0 88 88">
+          <circle cx="44" cy="44" r="35" fill="none" stroke="#080f1e" stroke-width="13"/>
+          <g id="donutArcs"></g>
+        </svg>
+        <div class="donut-c"><div class="donut-n" id="donutN">0</div><div class="donut-l">ITEM</div></div>
+      </div>
+      <div class="legend" id="donutLeg"></div>
+    </div>
+    <div class="add-row" style="flex-wrap:wrap">
+      <input class="inp" id="aName" placeholder="Asset name" maxlength="30">
+      <select class="sel" id="aCat">
+        <option value="savings">🏦 Savings</option><option value="investment">📈 Investment</option>
+        <option value="property">🏠 Property</option><option value="vehicle">🚗 Vehicle</option>
+        <option value="business">💼 Business</option><option value="crypto">₿ Crypto</option>
+        <option value="other">📦 Other</option>
+      </select>
+      <input class="inp" id="aVal" placeholder="Value (Rp)" type="number" min="0">
+      <input class="inp" id="aChg" placeholder="% change" type="number" step="0.1" style="flex:.4">
+      <button class="btn gold" onclick="addAsset()">+ ASSET</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+<div class="notify" id="notify"></div>
+
+<script>
+/* ── BG PARTICLES ── */
+const bgc=document.getElementById('bg-c'),bgx=bgc.getContext('2d');let BW,BH,pts=[];
+function rsz(){BW=bgc.width=window.innerWidth;BH=bgc.height=window.innerHeight}rsz();window.addEventListener('resize',rsz);
+for(let i=0;i<90;i++)pts.push({x:Math.random()*1920,y:Math.random()*1080,r:Math.random()*1.05,o:Math.random(),v:Math.random()*.0025+.001});
+(function loop(){bgx.clearRect(0,0,BW,BH);pts.forEach(p=>{p.o+=p.v;if(p.o>1||p.o<0)p.v*=-1;bgx.beginPath();bgx.arc(p.x%BW,p.y%BH,p.r,0,Math.PI*2);bgx.fillStyle='rgba(56,189,248,'+(p.o*.45)+')';bgx.fill()});requestAnimationFrame(loop)})();
+
+/* ── TABS ── */
+function swTab(id,btn){document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));document.getElementById('pane-'+id).classList.add('on');btn.classList.add('on')}
+
+/* ── MODALS ── */
+function openModal(id){document.getElementById(id).classList.add('show')}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id)}));
+
+/* ── RANKS ── */
+const RANKS=[
+  {l:'E',title:'IRON',      col:'#64748b',glow:'#64748b28',c1:'#475569',c2:'#94a3b8',minLvl:1, minStat:0,
+   desc:'The starting point of every hunter. Potential is dormant, waiting to be awakened.',
+   perks:['Access to basic quests','Inventory unlocked','Daily quest tracking','System status window']},
+  {l:'D',title:'BRONZE',    col:'#22c55e',glow:'#22c55e28',c1:'#16a34a',c2:'#4ade80',minLvl:5, minStat:25,
+   desc:'Awakened hunter. Basic abilities are unlocked and the path forward becomes clear.',
+   perks:['Hard difficulty quests unlocked','+5% XP bonus on all quests','Rank D title badge','Green avatar ring']},
+  {l:'C',title:'SILVER',    col:'#38bdf8',glow:'#38bdf828',c1:'#0284c7',c2:'#7dd3fc',minLvl:15,minStat:40,
+   desc:'A notable hunter, recognized by the system. Others begin to take notice of your growth.',
+   perks:['Extreme difficulty quests unlocked','+10% XP bonus','Silver title badge','Blue avatar ring']},
+  {l:'B',title:'GOLD',      col:'#a855f7',glow:'#a855f728',c1:'#7c3aed',c2:'#c084fc',minLvl:25,minStat:55,
+   desc:'Elite class hunter. You have surpassed most ordinary people in discipline and ability.',
+   perks:['+15% XP bonus on all quests','Gold title badge','Purple avatar ring','Aura effect unlocked']},
+  {l:'A',title:'PLATINUM',  col:'#f59e0b',glow:'#f59e0b28',c1:'#d97706',c2:'#fcd34d',minLvl:35,minStat:70,
+   desc:'Apex hunter, near the absolute pinnacle of human potential. Few ever reach this level.',
+   perks:['+20% XP bonus','Platinum title badge','Gold avatar ring','Legendary item drop boost']},
+  {l:'S',title:'SHADOW',    col:'#ef4444',glow:'#ef444428',c1:'#b91c1c',c2:'#f87171',minLvl:50,minStat:90,
+   desc:'Transcendent. The absolute strongest. A being that has rewritten the limits of the possible.',
+   perks:['+30% XP bonus','Shadow Monarch title','Red avatar ring of power','All system features unlocked']},
+];
+const MAX_LEVEL=50;
+const XP_MAP={easy:10,normal:20,hard:35,extreme:60};
+
+/* ── ACHIEVEMENTS ── */
+const ACHS=[
+  {id:'first_quest',icon:'⚔️',name:'FIRST BLOOD',desc:'Complete your first quest',check:s=>s.quests.some(q=>q.done)},
+  {id:'ten_quests',icon:'🏅',name:'VETERAN',desc:'Complete 10 quests',check:s=>s.quests.filter(q=>q.done).length>=10},
+  {id:'lvl10',icon:'⚡',name:'AWAKENED',desc:'Reach Level 10',check:s=>s.level>=10},
+  {id:'lvl25',icon:'🌟',name:'ELITE',desc:'Reach Level 25',check:s=>s.level>=25},
+  {id:'lvl50',icon:'👑',name:'SHADOW MONARCH',desc:'Reach Max Level 50',check:s=>s.level>=50},
+  {id:'rank_d',icon:'🟢',name:'RANK D',desc:'Achieve Rank D',check:s=>['D','C','B','A','S'].includes(getCurrentRank().l)},
+  {id:'rank_s',icon:'🔴',name:'RANK S',desc:'Achieve the legendary Rank S',check:s=>getCurrentRank().l==='S'},
+  {id:'stat100',icon:'💪',name:'MAXED OUT',desc:'Reach 100 in any stat',check:s=>Object.values(s.stats).some(v=>v>=100)},
+  {id:'all_stats50',icon:'⚖️',name:'BALANCED',desc:'All stats above 50',check:s=>Object.values(s.stats).every(v=>v>=50)},
+  {id:'millionaire',icon:'💰',name:'MILLIONAIRE',desc:'Total assets exceed Rp 1,000,000',check:s=>s.assets.reduce((a,x)=>a+x.value,0)>=1000000},
+  {id:'languages',icon:'🌐',name:'POLYGLOT',desc:'Learn 3 or more languages',check:s=>s.languages.length>=3},
+  {id:'legendary',icon:'✨',name:'LEGENDARY FIND',desc:'Obtain a legendary item',check:s=>s.inventory.some(i=>i.rarity==='legendary')},
+  {id:'saver',icon:'🏦',name:'SAVER',desc:'Register 3 bank accounts',check:s=>s.rekening.length>=3},
+  {id:'streak5',icon:'🔥',name:'ON FIRE',desc:'Reach a 5-day streak',check:s=>s.streak>=5},
+  {id:'inv10',icon:'🎒',name:'COLLECTOR',desc:'Collect 10 inventory items',check:s=>s.inventory.length>=10},
+];
+
+/* ── STATE ── */
+const DEF_STATE=()=>({
+  level:1,xp:0,xpMax:100,sp:0,totalXpEarned:0,streak:0,lastQuestDate:'',avatar:'⚔️',joinDate:new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
+  stats:{str:20,agi:20,int:20,per:20,vit:20,men:20},
+  quests:[
+    {id:1,text:'Exercise for 30 minutes',cat:'PHYSICAL',diff:'normal',done:false},
+    {id:2,text:'Read 20 pages of a book',cat:'INTELLECT',diff:'easy',done:false},
+    {id:3,text:'Meditate for 10 minutes',cat:'MENTAL',diff:'easy',done:false},
+  ],
+  rekening:[],transaksi:[],languages:[],inventory:[],assets:[],achievements:[]
+});
+
+let S=null;
+try{const raw=localStorage.getItem('slV6');if(raw)S=JSON.parse(raw)}catch(e){}
+if(!S)S=DEF_STATE();
+// Ensure all keys exist
+const def=DEF_STATE();
+Object.keys(def).forEach(k=>{if(S[k]===undefined)S[k]=def[k]});
+['rekening','transaksi','languages','inventory','assets','achievements'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});
+
+let nQ=Math.max(0,...S.quests.map(q=>q.id),0)+1;
+let nR=Math.max(0,...S.rekening.map(r=>r.id),0)+1;
+let nT=Math.max(0,...S.transaksi.map(t=>t.id),0)+1;
+let nL=Math.max(0,...S.languages.map(l=>l.id),0)+1;
+let nI=Math.max(0,...S.inventory.map(i=>i.id),0)+1;
+let nA=Math.max(0,...S.assets.map(a=>a.id),0)+1;
+let iF='all';
+let autoSaveTimer=null;
+let isOnline=navigator.onLine;
+
+/* ── SAVE SYSTEM ── */
+function save(silent=false){
+  try{
+    localStorage.setItem('slV6',JSON.stringify(S));
+    const now=new Date();
+    const ts=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    document.getElementById('lastSaveTxt').textContent=ts;
+    if(!silent){
+      const fl=document.getElementById('autosaveFlash');
+      fl.classList.add('show');
+      setTimeout(()=>fl.classList.remove('show'),1800);
+    }
+  }catch(e){notify('⚠ SAVE FAILED — storage may be full','red')}
+}
+function manualSave(){save(false);notify('💾 DATA SAVED SUCCESSFULLY','green')}
+function scheduleAutoSave(){clearTimeout(autoSaveTimer);autoSaveTimer=setTimeout(()=>save(false),1500)}
+
+/* ── ONLINE / SYNC ── */
+function updateOnlineStatus(){
+  isOnline=navigator.onLine;
+  const dot=document.getElementById('onlineDot');
+  const txt=document.getElementById('syncStatus');
+  if(isOnline){dot.classList.remove('off');txt.textContent='ONLINE — AUTOSAVE ON';}
+  else{dot.classList.add('off');txt.textContent='OFFLINE — LOCAL ONLY';}
+}
+updateOnlineStatus();
+window.addEventListener('online',()=>{updateOnlineStatus();notify('🌐 CONNECTION RESTORED','green')});
+window.addEventListener('offline',()=>{updateOnlineStatus();notify('⚠ CONNECTION LOST — SAVING LOCALLY','red')});
+
+// Realtime cross-tab sync via StorageEvent
+window.addEventListener('storage',e=>{
+  if(e.key==='slV6'&&e.newValue){
+    try{
+      const remote=JSON.parse(e.newValue);
+      // Merge: prefer newer level/xp, keep local unsaved changes
+      if(remote.level>S.level||(remote.level===S.level&&remote.xp>S.xp)){
+        S=remote;renderAll();notify('🔄 SYNCED FROM ANOTHER WINDOW');
+      }
+    }catch(_){}
+  }
+});
+
+// Auto-save every 30 seconds
+setInterval(()=>save(true),30000);
+
+/* ── EXPORT / IMPORT ── */
+function openExport(){
+  document.getElementById('exportArea').value=JSON.stringify(S,null,2);
+  openModal('exportModal');
+}
+function doCopy(){
+  navigator.clipboard.writeText(document.getElementById('exportArea').value).then(()=>notify('📋 COPIED TO CLIPBOARD','green')).catch(()=>{document.getElementById('exportArea').select();document.execCommand('copy');notify('📋 COPIED')});
+}
+function doImport(){
+  try{
+    const raw=document.getElementById('importArea').value.trim();
+    if(!raw){notify('⚠ NO DATA TO IMPORT','red');return}
+    const imported=JSON.parse(raw);
+    if(!imported.level||!imported.stats){notify('⚠ INVALID DATA FORMAT','red');return}
+    S=imported;save(false);renderAll();closeModal('exportModal');notify('✓ DATA IMPORTED SUCCESSFULLY','green');
+  }catch(e){notify('⚠ INVALID JSON DATA','red')}
+}
+
+/* ── RESET ── */
+function openModal2(id){openModal(id);document.getElementById('resetConfirmInp').value=''}
+function doReset(){
+  if(document.getElementById('resetConfirmInp').value.trim().toUpperCase()!=='RESET'){notify('⚠ TYPE "RESET" TO CONFIRM','red');return}
+  S=DEF_STATE();nQ=4;nR=1;nT=1;nL=1;nI=1;nA=1;
+  save(false);renderAll();closeModal('resetModal');
+  notify('↺ DATA RESET — NEW HUNTER INITIALIZED','gold');
+}
+document.querySelector('.sb-btn.reset').addEventListener('click',()=>{document.getElementById('resetConfirmInp').value='';openModal('resetModal')});
+
+/* ── NOTIFY ── */
+function notify(msg,type=''){
+  const el=document.getElementById('notify');
+  el.textContent=msg;el.className='notify show'+(type?' '+type:'');
+  clearTimeout(notify._t);notify._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+/* ── AVATAR ── */
+function toggleAvatarPicker(){document.getElementById('avatarPicker').classList.toggle('show')}
+function setAvatar(em){S.avatar=em;document.getElementById('avatarEl').textContent=em;document.getElementById('avatarPicker').classList.remove('show');scheduleAutoSave()}
+document.addEventListener('click',e=>{if(!e.target.closest('.avatar-wrap'))document.getElementById('avatarPicker').classList.remove('show')});
+
+/* ── RANK CALC ── */
+function getCurrentRank(){
+  const avg=Object.values(S.stats).reduce((a,b)=>a+b,0)/6;
+  let r=RANKS[0];
+  for(const rk of RANKS){if(S.level>=rk.minLvl&&avg>=rk.minStat)r=rk;else break;}
+  return r;
+}
+function getNextRank(){const cur=getCurrentRank();const i=RANKS.indexOf(cur);return i<RANKS.length-1?RANKS[i+1]:null}
+function getRankProgress(){
+  const cur=getCurrentRank(),nxt=getNextRank();
+  if(!nxt)return{pct:100,label:'MAXIMUM RANK ACHIEVED'};
+  const avg=Object.values(S.stats).reduce((a,b)=>a+b,0)/6;
+  const lvlP=Math.min(1,(S.level-cur.minLvl)/Math.max(1,nxt.minLvl-cur.minLvl));
+  const stP=Math.min(1,cur.minStat===nxt.minStat?1:(avg-cur.minStat)/Math.max(1,nxt.minStat-cur.minStat));
+  const pct=Math.round(Math.min(lvlP,stP)*100);
+  const nl=nxt.minLvl-S.level,ns=Math.max(0,Math.ceil(nxt.minStat-avg));
+  let label='';if(nl>0)label+='LVL +'+nl+' ';if(ns>0)label+='AVG STAT +'+ns;if(!label)label='REQUIREMENTS MET — CHECK RANK TAB';
+  return{pct,label:label.trim()};
+}
+
+/* ── RENDER IDENTITY ── */
+function renderID(){
+  const isMax=S.level>=MAX_LEVEL;
+  document.getElementById('lvlN').textContent=S.level;
+  document.getElementById('maxBadge').style.display=isMax?'inline':'none';
+  document.getElementById('xpBar').style.width=isMax?'100%':(S.xp/S.xpMax*100)+'%';
+  document.getElementById('xpVal').textContent=isMax?'MAX LEVEL REACHED':S.xp+' / '+S.xpMax+' XP';
+  document.getElementById('hpBar').style.width=S.stats.vit+'%';
+  document.getElementById('hpVal').textContent=S.stats.vit+' / 100';
+  document.getElementById('spVal').textContent=S.sp+' SP';
+  const avg=(Object.values(S.stats).reduce((a,b)=>a+b,0)/6).toFixed(1);
+  if(document.getElementById('avgStat'))document.getElementById('avgStat').textContent=avg;
+  const cur=getCurrentRank(),prog=getRankProgress();
+  document.getElementById('rankLtr').textContent=cur.l;
+  document.getElementById('rankLtr').style.color=cur.col;
+  document.getElementById('rankLtr').style.textShadow='0 0 20px '+cur.glow;
+  document.getElementById('rankTitleBadge').textContent=cur.title;
+  document.getElementById('rankTitleBadge').style.borderColor=cur.col+'88';
+  document.getElementById('rankTitleBadge').style.color=cur.col;
+  const rpb=document.getElementById('rankProgBar');
+  rpb.style.background='linear-gradient(90deg,'+cur.c1+','+cur.c2+')';
+  rpb.style.width=prog.pct+'%';
+  document.getElementById('rankProgVal').textContent=prog.pct+'% — '+prog.label;
+  document.getElementById('avatarEl').textContent=S.avatar||'⚔️';
+  document.getElementById('avatarEl').style.borderColor=cur.col;
+  document.getElementById('avatarEl').style.boxShadow='0 0 20px '+cur.glow+',inset 0 0 14px #0ea5e918';
+  document.getElementById('pJoined').textContent='HUNTER SINCE '+S.joinDate;
+}
+
+/* ── LEVEL UP ── */
+let lvlQ=[];
+function gainXP(n){
+  if(S.level>=MAX_LEVEL){notify('⚠ MAX LEVEL — cannot gain more XP');return}
+  const prevRank=getCurrentRank().l;
+  S.xp+=n;S.totalXpEarned+=n;
+  while(S.xp>=S.xpMax&&S.level<MAX_LEVEL){
+    S.xp-=S.xpMax;S.level++;S.xpMax=Math.floor(S.xpMax*1.28);S.sp+=3;
+    lvlQ.push({lvl:S.level,prevRank});
+  }
+  if(S.level>=MAX_LEVEL){S.xp=0}
+  if(lvlQ.length)showNextLvlUp();
+  checkAchievements();
+}
+function showNextLvlUp(){
+  if(!lvlQ.length)return;
+  const {lvl,prevRank}=lvlQ.shift();
+  const curRank=getCurrentRank();
+  document.getElementById('loNum').textContent=lvl;
+  const gotRankUp=curRank.l!==prevRank;
+  document.getElementById('loSub').textContent='+3 STAT POINTS GAINED'+(gotRankUp?' · RANK '+prevRank+' → '+curRank.l:'');
+  document.getElementById('loRank').textContent=gotRankUp?'🏆 RANK UP: '+curRank.title.toUpperCase():'';
+  document.getElementById('loRank').style.color=curRank.col;
+  document.getElementById('lvlOverlay').classList.add('show');
+  renderID();renderStats();renderRank();
+}
+function closeLvlUp(){document.getElementById('lvlOverlay').classList.remove('show');if(lvlQ.length)setTimeout(showNextLvlUp,300);else{save(false)}}
+
+/* ── STATS ── */
+const SD=[
+  {key:'str',icon:'💪',name:'STRENGTH',  desc:'Physical discipline & willpower. Exercise & endurance.',col:'#ef4444'},
+  {key:'agi',icon:'⚡',name:'AGILITY',   desc:'Productivity & adaptability. Time management & speed.',col:'#38bdf8'},
+  {key:'int',icon:'📚',name:'INTELLECT', desc:'Intelligence & knowledge. Learning & problem-solving.', col:'#a855f7'},
+  {key:'per',icon:'🎯',name:'PERCEPTION',desc:'Self-awareness & empathy. Reading people & situations.', col:'#f59e0b'},
+  {key:'vit',icon:'🌿',name:'VITALITY',  desc:'Health & energy. Sleep quality, diet & life balance.',   col:'#22c55e'},
+  {key:'men',icon:'🧘',name:'MENTALITY', desc:'Mental health & focus. Meditation & inner peace.',       col:'#22d3ee'},
+];
+function renderStats(){
+  const g=document.getElementById('statList');
+  if(!g.children.length){
+    SD.forEach(s=>{
+      const row=document.createElement('div');row.className='sl-item '+s.key;
+      row.innerHTML='<div class="sl-icon">'+s.icon+'</div>'
+        +'<div class="sl-name-wrap"><div class="sl-name">'+s.name+'</div><div class="sl-desc">'+s.desc+'</div></div>'
+        +'<div class="sl-bar-wrap"><div class="sl-bt"><div class="sl-bf" id="sb-'+s.key+'" style="width:0%;background:'+s.col+'cc"></div></div>'
+        +'<input type="range" class="sl-slider" id="sl-'+s.key+'" min="1" max="100" value="'+S.stats[s.key]+'"></div>'
+        +'<div class="sl-val" id="sv-'+s.key+'">'+S.stats[s.key]+'</div>';
+      g.appendChild(row);
+      document.getElementById('sl-'+s.key).addEventListener('input',e=>{
+        const nv=+e.target.value,d=nv-S.stats[s.key];
+        if(d>0&&S.sp<d){e.target.value=S.stats[s.key];notify('⚠ NOT ENOUGH SP — level up quests to earn more');return}
+        S.sp-=d;S.stats[s.key]=nv;updS(s.key);renderID();renderRank();checkAchievements();scheduleAutoSave();
+      });
+    });
+  }
+  SD.forEach(s=>updS(s.key));
+  const avg=(Object.values(S.stats).reduce((a,b)=>a+b,0)/6).toFixed(1);
+  if(document.getElementById('avgStat'))document.getElementById('avgStat').textContent=avg;
+}
+function updS(k){
+  document.getElementById('sv-'+k).textContent=S.stats[k];
+  setTimeout(()=>{const b=document.getElementById('sb-'+k);if(b)b.style.width=S.stats[k]+'%'},80);
+  const sl=document.getElementById('sl-'+k);if(sl)sl.value=S.stats[k];
+}
+
+/* ── RANK TAB ── */
+function renderRank(){
+  const cur=getCurrentRank();
+  const avg=Object.values(S.stats).reduce((a,b)=>a+b,0)/6;
+  const chips=document.getElementById('rankChips');chips.innerHTML='';
+  RANKS.forEach(r=>{
+    const isCur=r.l===cur.l,isUnlocked=S.level>=r.minLvl&&avg>=r.minStat;
+    const chip=document.createElement('div');
+    chip.className='rank-chip'+(isCur?' current':isUnlocked?' unlocked':' locked');
+    chip.style.setProperty('--rc',r.col);chip.style.setProperty('--rc-bg',r.glow);
+    chip.style.borderColor=isCur?r.col:r.col+'44';chip.style.color=r.col;
+    if(isCur){chip.style.background=r.glow;chip.style.boxShadow='0 0 14px '+r.glow}
+    chip.innerHTML='<div class="rc-ltr">'+r.l+'</div><div class="rc-title">'+r.title+'</div><div class="rc-lvl">LVL '+r.minLvl+'+</div>';
+    chips.appendChild(chip);
+  });
+  const grid=document.getElementById('rankInfoGrid');grid.innerHTML='';
+  RANKS.forEach(r=>{
+    const isCur=r.l===cur.l,isUnlocked=S.level>=r.minLvl&&avg>=r.minStat;
+    const card=document.createElement('div');
+    card.className='ric'+(isCur?' current-ric':'');
+    if(isCur)card.style.setProperty('--rc-border',r.col);
+    const statusTxt=isCur?'CURRENT':isUnlocked?'UNLOCKED':'LOCKED';
+    const statusCol=isCur?r.col:isUnlocked?'#22c55e':'#64748b';
+    const perks=r.perks.map(p=>'<div class="ric-perk" style="color:'+r.col+'88">'+p+'</div>').join('');
+    card.innerHTML='<div class="ric-header"><div class="ric-ltr" style="color:'+r.col+';text-shadow:0 0 12px '+r.glow+'">'+r.l+'</div>'
+      +'<div class="ric-info"><div class="ric-title" style="color:'+r.col+'">'+r.title+'</div>'
+      +'<div class="ric-req">LVL '+r.minLvl+' · AVG STAT '+r.minStat+'</div></div></div>'
+      +'<div class="ric-desc">'+r.desc+'</div>'
+      +'<div class="ric-perks">'+perks+'</div>'
+      +'<div class="ric-status" style="border-color:'+statusCol+'44;color:'+statusCol+'">'+statusTxt+'</div>';
+    grid.appendChild(card);
+  });
+}
+function openRankModal(){
+  const body=document.getElementById('rankModalBody');body.innerHTML='';
+  const cur=getCurrentRank();const avg=Object.values(S.stats).reduce((a,b)=>a+b,0)/6;
+  RANKS.forEach(r=>{
+    const isCur=r.l===cur.l,isUnlocked=S.level>=r.minLvl&&avg>=r.minStat;
+    const sec=document.createElement('div');sec.style.cssText='margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid rgba(26,74,107,.4)';
+    const needLvl=Math.max(0,r.minLvl-S.level);const needStat=Math.max(0,r.minStat-avg);
+    const reqs=[];
+    if(needLvl>0)reqs.push('<span style="color:#f59e0b">Level +'+Math.ceil(needLvl)+' needed</span>');
+    if(needStat>0)reqs.push('<span style="color:#38bdf8">Avg stat +'+Math.ceil(needStat)+' needed</span>');
+    const statusLine=isCur?'<span style="color:'+r.col+'">▶ CURRENT RANK</span>':isUnlocked?'<span style="color:#22c55e">✓ UNLOCKED</span>':'<span style="color:#64748b">○ LOCKED — '+reqs.join(' · ')+'</span>';
+    const perksHtml=r.perks.map(p=>'<div style="font-size:11px;color:'+r.col+'88;margin-top:3px;padding-left:10px">▸ '+p+'</div>').join('');
+    sec.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+      +'<span style="font-family:Cinzel,serif;font-size:28px;font-weight:900;color:'+r.col+';text-shadow:0 0 12px '+r.glow+'">'+r.l+'</span>'
+      +'<div><div style="font-family:Cinzel,serif;font-size:14px;font-weight:700;color:'+r.col+'">'+r.title+'</div>'
+      +'<div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--dim);letter-spacing:1px;margin-top:2px">REQUIRES: LVL '+r.minLvl+' · AVG STAT '+r.minStat+'</div></div>'
+      +'<div style="margin-left:auto;font-family:Share Tech Mono,monospace;font-size:9px">'+statusLine+'</div></div>'
+      +'<div style="font-size:12px;color:var(--dim);margin-bottom:6px;line-height:1.5">'+r.desc+'</div>'
+      +'<div style="font-family:Share Tech Mono,monospace;font-size:9px;color:var(--dim);letter-spacing:1.5px;margin-bottom:4px">RANK PERKS:</div>'+perksHtml;
+    body.appendChild(sec);
+  });
+  openModal('rankModal');
+}
+
+/* ── QUESTS ── */
+function renderQ(){
+  const total=S.quests.length,done=S.quests.filter(q=>q.done).length;
+  document.getElementById('qTotal').textContent=total;
+  document.getElementById('qDone').textContent=done;
+  document.getElementById('qStreak').textContent=S.streak||0;
+  document.getElementById('qXpEarned').textContent=S.totalXpEarned||0;
+  const el=document.getElementById('questList');el.innerHTML='';
+  if(!S.quests.length){el.innerHTML='<div class="empty-st">NO QUESTS — ADD YOUR FIRST QUEST BELOW</div>';return}
+  S.quests.forEach(q=>{
+    const xp=XP_MAP[q.diff]||20;
+    const d=document.createElement('div');d.className='qi'+(q.done?' done':'');
+    d.innerHTML='<div class="qc">'+(q.done?'✓':'')+'</div>'
+      +'<div class="qcnt"><div class="qt">'+q.text+'</div><div class="q-tags"><span class="q-cat">'+(q.cat||'DAILY')+'</span><span class="q-diff '+q.diff+'">'+q.diff.toUpperCase()+'</span></div></div>'
+      +'<div class="qxp">'+(q.done?'✓ DONE':'+'+xp+' XP')+'</div>'
+      +'<div class="qdel" onclick="delQ('+q.id+')">✕</div>';
+    d.querySelector('.qcnt').onclick=()=>togQ(q.id);
+    d.querySelector('.qc').onclick=()=>togQ(q.id);
+    el.appendChild(d);
+  });
+}
+function togQ(id){
+  const q=S.quests.find(x=>x.id===id);if(!q)return;
+  if(!q.done){
+    q.done=true;const xp=XP_MAP[q.diff]||20;gainXP(xp);
+    // Streak tracking
+    const today=new Date().toDateString();
+    if(S.lastQuestDate!==today){S.streak=(S.streak||0)+1;S.lastQuestDate=today}
+    notify('✦ QUEST COMPLETE — +'+xp+' XP'+(S.streak>1?' 🔥 STREAK '+S.streak:''),'');
+  }else{q.done=false}
+  renderQ();renderID();checkAchievements();scheduleAutoSave();
+}
+function delQ(id){S.quests=S.quests.filter(q=>q.id!==id);renderQ();scheduleAutoSave()}
+function clearDoneQuests(){S.quests=S.quests.filter(q=>!q.done);renderQ();scheduleAutoSave();notify('✓ COMPLETED QUESTS CLEARED')}
+function addQ(){
+  const t=document.getElementById('qInp').value.trim(),c=document.getElementById('qCat').value.trim(),d=document.getElementById('qDiff').value;
+  if(!t){notify('⚠ ENTER QUEST NAME','red');return}
+  S.quests.push({id:nQ++,text:t,cat:c.toUpperCase()||'DAILY',diff:d,done:false});
+  document.getElementById('qInp').value='';document.getElementById('qCat').value='';
+  renderQ();scheduleAutoSave();notify('⚔ QUEST ADDED — '+d.toUpperCase());
+}
+document.getElementById('qInp').addEventListener('keydown',e=>{if(e.key==='Enter')addQ()});
+
+/* ── ACHIEVEMENTS ── */
+function checkAchievements(){
+  let newUnlock=false;
+  ACHS.forEach(a=>{
+    const unlocked=S.achievements.includes(a.id);
+    if(!unlocked&&a.check(S)){S.achievements.push(a.id);newUnlock=true;setTimeout(()=>notify('🌟 ACHIEVEMENT: '+a.name,'gold'),500)}
+  });
+  renderAch();if(newUnlock)scheduleAutoSave();
+}
+function renderAch(){
+  const g=document.getElementById('achGrid');g.innerHTML='';
+  const unlocked=S.achievements.length;
+  document.getElementById('achProgress').textContent=unlocked+' / '+ACHS.length;
+  ACHS.forEach(a=>{
+    const isUnlocked=S.achievements.includes(a.id);
+    const el=document.createElement('div');el.className='ach-item '+(isUnlocked?'unlocked':'locked');
+    el.innerHTML='<div class="ach-badge">'+(isUnlocked?'✓':'🔒')+'</div>'
+      +'<span class="ach-icon">'+a.icon+'</span>'
+      +'<div class="ach-name">'+a.name+'</div>'
+      +'<div class="ach-desc">'+a.desc+'</div>';
+    g.appendChild(el);
+  });
+}
+
+/* ── FINANCE ── */
+function renderFin(){
+  const ts=S.rekening.reduce((a,r)=>a+r.balance,0);
+  document.getElementById('totSaldo').textContent=fRp(ts);
+  document.getElementById('rekCnt').textContent=S.rekening.length+' accounts registered';
+  const cf=S.transaksi.reduce((a,t)=>a+(t.type==='in'?t.amount:-t.amount),0);
+  document.getElementById('cashflow').textContent=(cf>=0?'+':'')+fRp(cf);
+  document.getElementById('cashflow').style.color=cf>=0?'var(--green)':'var(--red)';
+  document.getElementById('trxCnt').textContent=S.transaksi.length+' total transactions';
+  // Monthly cashflow
+  const now=new Date();const month=now.getMonth(),year=now.getFullYear();
+  const monthTrx=S.transaksi.filter(t=>{try{const d=new Date(t.date);return d.getMonth()===month&&d.getFullYear()===year}catch{return false}});
+  const mf=monthTrx.reduce((a,t)=>a+(t.type==='in'?t.amount:-t.amount),0);
+  document.getElementById('monthFlow').textContent=(mf>=0?'+':'')+fRp(mf);
+  document.getElementById('monthFlow').style.color=mf>=0?'var(--green)':'var(--red)';
+  document.getElementById('monthLbl').textContent=now.toLocaleDateString('en-GB',{month:'long',year:'numeric'}).toUpperCase();
+  const rl=document.getElementById('rekList');rl.innerHTML='';
+  if(!S.rekening.length)rl.innerHTML='<div class="empty-st">NO ACCOUNTS REGISTERED</div>';
+  S.rekening.forEach(r=>{
+    const el=document.createElement('div');el.className='rek-item';
+    el.innerHTML='<div class="rek-icon">🏦</div><div class="rek-info"><div class="rek-name">'+r.name+'</div><div class="rek-bank">'+r.bank+'</div></div><div class="rek-bal">'+fRp(r.balance)+'</div><div class="rek-del" onclick="delRek('+r.id+')">✕</div>';
+    rl.appendChild(el);
+  });
+  const tl=document.getElementById('trxList');tl.innerHTML='';
+  if(!S.transaksi.length)tl.innerHTML='<div class="empty-st">NO TRANSACTIONS YET</div>';
+  [...S.transaksi].reverse().slice(0,10).forEach(t=>{
+    const el=document.createElement('div');el.className='trx-item';
+    const rn=S.rekening.find(r=>r.id===t.rekId)?.name||'—';
+    el.innerHTML='<div class="trx-dot '+t.type+'"></div><div class="trx-info"><div class="trx-name">'+t.name+'</div><div class="trx-date">'+rn+' · '+t.date+'</div></div><div class="trx-amt '+t.type+'">'+(t.type==='in'?'+':'-')+fRp(t.amount)+'</div>';
+    tl.appendChild(el);
+  });
+  const sel=document.getElementById('tRek');sel.innerHTML='<option value="">-- Account --</option>';
+  S.rekening.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.name+' ('+r.bank+')';sel.appendChild(o)});
+}
+function addRek(){
+  const name=document.getElementById('rName').value.trim(),bank=document.getElementById('rBank').value.trim(),balance=parseFloat(document.getElementById('rBal').value)||0;
+  if(!name||!bank){notify('⚠ FILL IN NAME & BANK','red');return}
+  S.rekening.push({id:nR++,name,bank,balance});
+  ['rName','rBank','rBal'].forEach(id=>document.getElementById(id).value='');
+  renderFin();checkAchievements();scheduleAutoSave();notify('💳 ACCOUNT ADDED — '+fRp(balance),'green');
+}
+function delRek(id){S.rekening=S.rekening.filter(r=>r.id!==id);renderFin();scheduleAutoSave()}
+function addTrx(){
+  const name=document.getElementById('tName').value.trim(),amount=parseFloat(document.getElementById('tAmt').value),type=document.getElementById('tType').value,rekId=parseInt(document.getElementById('tRek').value)||null;
+  if(!name||!amount||amount<=0){notify('⚠ FILL IN DESCRIPTION & AMOUNT','red');return}
+  const date=new Date().toISOString().split('T')[0];
+  S.transaksi.push({id:nT++,name,amount,type,rekId,date});
+  if(rekId){const r=S.rekening.find(x=>x.id===rekId);if(r)r.balance+=type==='in'?amount:-amount}
+  ['tName','tAmt'].forEach(id=>document.getElementById(id).value='');
+  renderFin();scheduleAutoSave();notify(type==='in'?'📥 INCOME +'+fRp(amount):'📤 EXPENSE -'+fRp(amount));
+}
+function fRp(v){return'Rp '+Math.round(v).toLocaleString('id-ID')}
+
+/* ── LANGUAGE ── */
+const LCOL={beg:'#64748b',ele:'#22c55e',int:'#38bdf8',adv:'#a855f7',flu:'#f59e0b',nat:'#ef4444'};
+function renderLang(){
+  const g=document.getElementById('langGrid');g.innerHTML='';
+  if(!S.languages.length){g.innerHTML='<div class="empty-st" style="grid-column:1/-1">NO LANGUAGES REGISTERED</div>';return}
+  S.languages.forEach(l=>{
+    const c=document.createElement('div');c.className='lang-card';
+    const col=LCOL[l.level]||'#64748b';
+    const tags=(l.skills||[]).map(s=>'<span class="lang-tag">'+s+'</span>').join('');
+    c.innerHTML='<div class="lc-top"><div class="lc-flag">'+(l.flag||'🌐')+'</div><div class="lc-info"><div class="lc-name">'+l.name+'</div><div class="lc-pct">'+l.pct+'% PROFICIENCY</div></div><span class="lc-lvl '+l.level+'">'+l.level.toUpperCase()+'</span></div>'
+      +'<div class="lang-bt"><div class="lang-bf" id="lb-'+l.id+'" style="width:0%;background:linear-gradient(90deg,'+col+'55,'+col+')"></div></div>'
+      +'<div class="lang-tags">'+tags+'</div><div class="lc-del" onclick="delLang('+l.id+')">✕</div>';
+    g.appendChild(c);
+    setTimeout(()=>{const b=document.getElementById('lb-'+l.id);if(b)b.style.width=l.pct+'%'},120);
+  });
+}
+function addLang(){
+  const name=document.getElementById('lName').value.trim(),flag=document.getElementById('lFlag').value.trim()||'🌐',level=document.getElementById('lLvl').value,pct=Math.min(100,Math.max(1,parseInt(document.getElementById('lPct').value)||20));
+  const sr=document.getElementById('lSkills').value.trim(),skills=sr?sr.split(',').map(x=>x.trim()).filter(Boolean):[];
+  if(!name){notify('⚠ ENTER LANGUAGE NAME','red');return}
+  S.languages.push({id:nL++,name,flag,level,pct,skills});
+  ['lName','lFlag','lPct','lSkills'].forEach(id=>document.getElementById(id).value='');
+  renderLang();checkAchievements();scheduleAutoSave();notify('🌐 '+name.toUpperCase()+' ADDED');
+}
+function delLang(id){S.languages=S.languages.filter(l=>l.id!==id);renderLang();scheduleAutoSave()}
+
+/* ── INVENTORY ── */
+function renderInv(){
+  const all=S.inventory;document.getElementById('invCount').textContent=all.length+' items';
+  const g=document.getElementById('invGrid');g.innerHTML='';
+  const items=iF==='all'?all:all.filter(i=>i.cat===iF);
+  if(!items.length){g.innerHTML='<div class="empty-st" style="grid-column:1/-1">INVENTORY IS EMPTY</div>';return}
+  items.forEach(i=>{
+    const el=document.createElement('div');el.className='inv-item '+i.rarity;
+    el.innerHTML='<div class="ii-del" onclick="delInv('+i.id+')">✕</div><span class="ii-icon">'+(i.icon||'📦')+'</span><div class="ii-name">'+i.name+'</div><div class="ii-cat">'+i.cat+'</div><div class="ii-rar '+i.rarity+'">'+i.rarity.toUpperCase()+'</div><div class="ii-qty">×'+(i.qty||1)+'</div>';
+    g.appendChild(el);
+  });
+}
+function fInv(cat,btn){iF=cat;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderInv()}
+function addInv(){
+  const name=document.getElementById('iName').value.trim(),icon=document.getElementById('iIcon').value.trim()||'📦',cat=document.getElementById('iCat').value,rarity=document.getElementById('iRar').value,qty=parseInt(document.getElementById('iQty').value)||1;
+  if(!name){notify('⚠ ENTER ITEM NAME','red');return}
+  S.inventory.push({id:nI++,name,icon,cat,rarity,qty});
+  document.getElementById('iName').value='';document.getElementById('iIcon').value='';document.getElementById('iQty').value='1';
+  renderInv();checkAchievements();scheduleAutoSave();
+  const msgs={common:'ITEM ADDED',uncommon:'✦ UNCOMMON!',rare:'★ RARE ITEM!',epic:'★★ EPIC!!',legendary:'★★★ LEGENDARY!!!',};
+  notify(msgs[rarity]||'ITEM ADDED',rarity==='legendary'?'gold':rarity==='epic'?'':rarity==='rare'?'':'');
+}
+function delInv(id){S.inventory=S.inventory.filter(i=>i.id!==id);renderInv();scheduleAutoSave()}
+
+/* ── ASSETS ── */
+const AICO={savings:'🏦',investment:'📈',property:'🏠',vehicle:'🚗',business:'💼',crypto:'₿',other:'📦'};
+const ACOL={savings:'#38bdf8',investment:'#22c55e',property:'#f59e0b',vehicle:'#a855f7',business:'#ef4444',crypto:'#fb923c',other:'#94a3b8'};
+function renderAssets(){
+  const total=S.assets.reduce((a,x)=>a+x.value,0),gain=S.assets.reduce((a,x)=>a+x.value*(parseFloat(x.change)||0)/100,0);
+  document.getElementById('totAset').textContent=fRp(total);
+  document.getElementById('totGain').textContent=(gain>=0?'+':'')+fRp(gain);
+  document.getElementById('totGain').className='ahc-val '+(gain>=0?'g':'r');
+  document.getElementById('cntAset').textContent=S.assets.length+' ASSETS';
+  const list=document.getElementById('assetList');list.innerHTML='';
+  if(!S.assets.length)list.innerHTML='<div class="empty-st">NO ASSETS REGISTERED</div>';
+  S.assets.forEach(a=>{
+    const chg=parseFloat(a.change)||0;
+    const el=document.createElement('div');el.className='asset-item';
+    el.innerHTML='<div class="ai-icon">'+(AICO[a.cat]||'📦')+'</div><div class="ai-info"><div class="ai-name">'+a.name+'</div><div class="ai-cat">'+a.cat.toUpperCase()+'</div></div><div class="ai-right"><div class="ai-val">'+fRp(a.value)+'</div><div class="ai-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'+':'')+chg+'%</div></div><div class="ai-del" onclick="delAsset('+a.id+')">✕</div>';
+    list.appendChild(el);
+  });
+  renderDonut();checkAchievements();
+}
+function renderDonut(){
+  const arc=document.getElementById('donutArcs'),leg=document.getElementById('donutLeg');arc.innerHTML='';leg.innerHTML='';
+  document.getElementById('donutN').textContent=S.assets.length;
+  if(!S.assets.length)return;
+  const total=S.assets.reduce((a,x)=>a+x.value,0),bycat={};
+  S.assets.forEach(a=>{bycat[a.cat]=(bycat[a.cat]||0)+a.value});
+  const R=35,C=44,ci=2*Math.PI*R;let off=0;
+  Object.entries(bycat).forEach(([cat,val])=>{
+    const pct=val/total,dash=pct*ci;
+    const a=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    a.setAttribute('cx',C);a.setAttribute('cy',C);a.setAttribute('r',R);
+    a.setAttribute('fill','none');a.setAttribute('stroke',ACOL[cat]||'#94a3b8');
+    a.setAttribute('stroke-width','13');a.setAttribute('stroke-dasharray',dash+' '+(ci-dash));a.setAttribute('stroke-dashoffset',-off);
+    arc.appendChild(a);off+=dash;
+    const li=document.createElement('div');li.className='leg-i';
+    li.innerHTML='<div class="leg-dot" style="background:'+(ACOL[cat]||'#94a3b8')+'"></div><div class="leg-txt">'+cat.toUpperCase()+'</div><div class="leg-pct">'+Math.round(pct*100)+'%</div>';
+    leg.appendChild(li);
+  });
+}
+function addAsset(){
+  const name=document.getElementById('aName').value.trim(),cat=document.getElementById('aCat').value,value=parseFloat(document.getElementById('aVal').value),change=parseFloat(document.getElementById('aChg').value)||0;
+  if(!name||!value||value<=0){notify('⚠ FILL IN NAME & VALUE','red');return}
+  S.assets.push({id:nA++,name,cat,value,change});
+  document.getElementById('aName').value='';document.getElementById('aVal').value='';document.getElementById('aChg').value='';
+  renderAssets();scheduleAutoSave();notify('🏦 '+name.toUpperCase()+' — '+fRp(value),'gold');
+}
+function delAsset(id){S.assets=S.assets.filter(a=>a.id!==id);renderAssets();scheduleAutoSave()}
+
+/* ── RENDER ALL ── */
+function renderAll(){
+  renderID();renderStats();renderRank();renderQ();renderAch();renderFin();renderLang();renderInv();renderAssets();
+  document.getElementById('pName').textContent=S.name||'YOUR NAME';
+  document.getElementById('pTitle').textContent=S.playerTitle||'The One Who Arises';
+}
+
+/* ── EDITABLE FIELDS ── */
+document.getElementById('pName').addEventListener('blur',function(){S.name=this.textContent.trim();scheduleAutoSave()});
+document.getElementById('pTitle').addEventListener('blur',function(){S.playerTitle=this.textContent.trim();scheduleAutoSave()});
+
+/* ── INIT ── */
+document.getElementById('pName').textContent=S.name||'YOUR NAME';
+document.getElementById('pTitle').textContent=S.playerTitle||'The One Who Arises';
+renderAll();
+setTimeout(()=>{
+  SD.forEach(s=>{const b=document.getElementById('sb-'+s.key);if(b)b.style.width=S.stats[s.key]+'%'});
+  document.getElementById('xpBar').style.width=S.level>=MAX_LEVEL?'100%':(S.xp/S.xpMax*100)+'%';
+  document.getElementById('hpBar').style.width=S.stats.vit+'%';
+  const prog=getRankProgress();document.getElementById('rankProgBar').style.width=prog.pct+'%';
+},250);
+
+// Initial save to record join date
+save(true);
+</script>
+
+<!-- ═══════════════════════════════════════════
+     PWA — SERVICE WORKER & INSTALL PROMPT
+═══════════════════════════════════════════ -->
+<style>
+/* Install Banner */
+#pwa-banner{
+  position:fixed;bottom:0;left:0;right:0;z-index:900;
+  background:linear-gradient(135deg,#050d18,#020810);
+  border-top:1px solid #0ea5e9;
+  padding:14px 18px;
+  display:flex;align-items:center;gap:12px;
+  transform:translateY(100%);
+  transition:transform .45s cubic-bezier(.22,1,.36,1);
+  box-shadow:0 -4px 30px rgba(14,165,233,.2);
+}
+#pwa-banner.show{transform:translateY(0)}
+.pwa-icon{font-size:32px;flex-shrink:0}
+.pwa-text{flex:1;min-width:0}
+.pwa-title{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#38bdf8;letter-spacing:2px}
+.pwa-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:#64748b;letter-spacing:1px;margin-top:3px}
+.pwa-btns{display:flex;gap:8px;flex-shrink:0}
+.pwa-btn-install{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:8px 14px;border-radius:3px;border:1px solid rgba(14,165,233,.6);color:#38bdf8;background:rgba(14,165,233,.1);cursor:pointer;transition:all .2s;white-space:nowrap}
+.pwa-btn-install:hover{background:rgba(14,165,233,.2);box-shadow:0 0 12px rgba(14,165,233,.25)}
+.pwa-btn-dismiss{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:1px;padding:8px 10px;border-radius:3px;border:1px solid rgba(100,116,139,.3);color:#64748b;background:transparent;cursor:pointer;transition:all .2s}
+.pwa-btn-dismiss:hover{color:#e0f2fe}
+
+/* Offline indicator */
+#offline-bar{
+  position:fixed;top:0;left:0;right:0;z-index:800;
+  background:#7f1d1d;border-bottom:1px solid #ef4444;
+  padding:6px 16px;text-align:center;
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:#fca5a5;letter-spacing:2px;
+  transform:translateY(-100%);transition:transform .3s ease;
+}
+#offline-bar.show{transform:translateY(0)}
+
+/* Update banner */
+#update-bar{
+  position:fixed;top:0;left:0;right:0;z-index:801;
+  background:linear-gradient(90deg,#0c4a6e,#0369a1);
+  border-bottom:1px solid #0ea5e9;
+  padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  transform:translateY(-100%);transition:transform .3s ease;
+}
+#update-bar.show{transform:translateY(0)}
+.upd-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:#7dd3fc;letter-spacing:1.5px}
+.upd-btn{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:5px 12px;border:1px solid rgba(56,189,248,.6);border-radius:3px;color:#38bdf8;background:rgba(56,189,248,.1);cursor:pointer}
+</style>
+
+<!-- Offline indicator -->
+<div id="offline-bar">⚠ YOU ARE OFFLINE — DATA IS SAVED LOCALLY</div>
+
+<!-- Update available bar -->
+<div id="update-bar">
+  <span class="upd-txt">🔄 NEW VERSION AVAILABLE — RELOAD TO UPDATE</span>
+  <button class="upd-btn" onclick="location.reload()">RELOAD</button>
+</div>
+
+<!-- Install to Home Screen banner -->
+<div id="pwa-banner">
+  <div class="pwa-icon">⚔️</div>
+  <div class="pwa-text">
+    <div class="pwa-title">INSTALL ARISE APP</div>
+    <div class="pwa-sub">ADD TO HOME SCREEN · WORKS OFFLINE · NO STORE NEEDED</div>
+  </div>
+  <div class="pwa-btns">
+    <button class="pwa-btn-dismiss" onclick="dismissInstall()">LATER</button>
+    <button class="pwa-btn-install" onclick="triggerInstall()">⬇ INSTALL</button>
+  </div>
+</div>
+
+<script>
+/* ── SERVICE WORKER REGISTRATION ── */
+let swRegistration = null;
+let deferredPrompt = null;
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      swRegistration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+      console.log('[PWA] Service Worker registered:', swRegistration.scope);
+
+      // Check for updates
+      swRegistration.addEventListener('updatefound', () => {
+        const newWorker = swRegistration.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New version available
+            document.getElementById('update-bar').classList.add('show');
+          }
+        });
+      });
+
+      // Update online status in main app
+      updateOnlineStatus();
+    } catch (err) {
+      console.warn('[PWA] Service Worker registration failed:', err);
+    }
+  });
+}
+
+/* ── INSTALL PROMPT ── */
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 3 seconds if not dismissed before
+  const dismissed = localStorage.getItem('pwaDismissed');
+  if (!dismissed) {
+    setTimeout(() => document.getElementById('pwa-banner').classList.add('show'), 3000);
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-banner').classList.remove('show');
+  deferredPrompt = null;
+  // Show success notification using main app notify
+  if (typeof notify === 'function') notify('✓ ARISE APP INSTALLED SUCCESSFULLY!', 'green');
+  console.log('[PWA] App installed!');
+});
+
+async function triggerInstall() {
+  if (!deferredPrompt) {
+    // Fallback: show manual instructions
+    alert('To install:\n\n1. Tap the browser menu (⋮)\n2. Select "Add to Home Screen"\n3. Tap "Add"');
+    return;
+  }
+  document.getElementById('pwa-banner').classList.remove('show');
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  console.log('[PWA] User choice:', outcome);
+  deferredPrompt = null;
+}
+
+function dismissInstall() {
+  document.getElementById('pwa-banner').classList.remove('show');
+  localStorage.setItem('pwaDismissed', '1');
+}
+
+/* ── OFFLINE / ONLINE INDICATOR ── */
+const offlineBar = document.getElementById('offline-bar');
+function handleOnline() {
+  offlineBar.classList.remove('show');
+  updateOnlineStatus();
+}
+function handleOffline() {
+  offlineBar.classList.add('show');
+  updateOnlineStatus();
+}
+window.addEventListener('online', handleOnline);
+window.addEventListener('offline', handleOffline);
+if (!navigator.onLine) offlineBar.classList.add('show');
+
+/* ── HASH-BASED SHORTCUTS ── */
+function handleHash() {
+  const hash = location.hash.replace('#','');
+  const tabMap = { stats:'stats', quests:'quests', rank:'rank', finance:'finance', lang:'lang', inv:'inv', assets:'assets' };
+  if (tabMap[hash]) {
+    const btn = document.querySelector(`.tab[onclick*="${tabMap[hash]}"]`);
+    if (btn) btn.click();
+  }
+}
+window.addEventListener('hashchange', handleHash);
+handleHash();
+
+/* ── PREVENT PULL-TO-REFRESH on Android ── */
+let startY = 0;
+document.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
+document.addEventListener('touchmove', e => {
+  const y = e.touches[0].clientY;
+  if (y > startY && window.scrollY === 0) e.preventDefault();
+}, { passive: false });
+
+/* ── REQUEST PERSISTENT STORAGE (helps Android keep data) ── */
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().then(granted => {
+    console.log('[PWA] Persistent storage:', granted ? 'granted' : 'denied');
+  });
+}
+
+/* ── WAKE LOCK (keep screen on while using, optional) ── */
+// Uncomment if you want screen to stay on
+// if ('wakeLock' in navigator) {
+//   navigator.wakeLock.request('screen').catch(() => {});
+// }
+</script>
+</body>
+</html>
